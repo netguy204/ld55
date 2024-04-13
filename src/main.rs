@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{input::mouse::MouseMotion, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
@@ -77,6 +77,13 @@ fn camera_follow(
     camera_proj.scale = 0.25;
 }
 
+fn mouse_debug(
+    mut movement: EventReader<MouseMotion>,
+) {
+    for mov in movement.read() {
+        println!("movement: {:?}", mov);
+    }
+}
 
 fn main() {
     App::new()
@@ -93,6 +100,6 @@ fn main() {
         .register_ldtk_int_cell::<WallBundle>(2)
         .register_ldtk_entity::<PlayerBundle>("Player")
         .add_systems(Startup, setup)
-        .add_systems(Update, (movement, camera_follow))
+        .add_systems(Update, (movement, camera_follow, mouse_debug))
         .run();
 }
