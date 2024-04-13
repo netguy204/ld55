@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, text::BreakLineOn};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -22,7 +22,7 @@ fn update_player(
             if distance < 10.0 {
                 commands.entity(entity).despawn();
             }
-            println!("impulse: {:?}, distance: {:?}", impulse, distance);
+            // println!("impulse: {:?}, distance: {:?}", impulse, distance);
             velocity.linvel += impulse;
         }
     }
@@ -45,6 +45,41 @@ fn update_placer(
         }
     }
 }
+
+fn check_win(
+    player: Query<&Transform, With<components::Player>>,
+    goal: Query<(Entity, &Transform), (With<components::Goal>, Without<components::Player>)>,
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    mut level: ResMut<LevelSelection>,
+) {
+    if let Some(player) = player.iter().next() {
+        for (entity, goal) in goal.iter() {
+            let distance = player.translation.distance(goal.translation);
+            if distance < 10.0 {
+                commands.spawn(TextBundle {
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: "You Win!".to_string(),
+                            style: TextStyle {
+                                font_size: 40.0,
+                                color: Color::WHITE,
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            },
+                        }],
+                        alignment: TextAlignment::Center,
+                        linebreak_behavior: BreakLineOn::WordBoundary,
+                    },
+                    ..Default::default()
+                });
+                commands.entity(entity).despawn();
+                *level = LevelSelection::Uid(1);
+            }
+            println!("distance: {:?}", distance)
+        }
+    }
+}
+
 
 pub fn movement(
     keyboard_input: Res<Input<KeyCode>>,
@@ -117,6 +152,6 @@ fn main() {
         .register_ldtk_entity::<components::GoalBundle>("Goal")
         .add_systems(Startup, setup)
         .add_systems(Update, (systems::camera_follow, systems::mouse_to_world, systems::spawn_wall_collision))
-        .add_systems(Update, (update_placer, update_player))
+        .add_systems(Update, (update_placer, update_player, check_win))
         .run();
 }

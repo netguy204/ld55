@@ -31,13 +31,15 @@ pub struct PlayerBundle {
 }
 
 #[derive(Component, Default, Clone)]
-struct Goal;
+pub struct Goal;
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoalBundle {
     goal: Goal,
-    #[sprite_sheet_bundle("sunny_sprites/cherry.png", 16.0, 16.0, 3, 1, 0.0, 0.0, 1)]
+    #[sprite_sheet_bundle("sunny_sprites/cherry.png", 21.0, 21.0, 3, 1, 0.0, 0.0, 1)]
     pub sprite_bundle: SpriteSheetBundle,
+    #[worldly]
+    pub worldly: Worldly,
 }
 
 #[derive(Component)]

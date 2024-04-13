@@ -170,8 +170,6 @@ pub fn spawn_wall_collision(
                                 0.,
                             ))
                             .insert(GlobalTransform::default());
-
-                        println!("added wall colliders")
                     }
                 });
             }
