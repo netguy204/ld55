@@ -30,6 +30,16 @@ pub struct PlayerBundle {
     player: Player,
 }
 
+#[derive(Component, Default, Clone)]
+struct Goal;
+
+#[derive(Clone, Default, Bundle, LdtkEntity)]
+pub struct GoalBundle {
+    goal: Goal,
+    #[sprite_sheet_bundle("sunny_sprites/cherry.png", 16.0, 16.0, 3, 1, 0.0, 0.0, 1)]
+    pub sprite_bundle: SpriteSheetBundle,
+}
+
 #[derive(Component)]
 pub struct MainCamera;
 

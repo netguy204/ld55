@@ -114,6 +114,7 @@ fn main() {
         })
         .register_ldtk_int_cell::<components::WallBundle>(2)
         .register_ldtk_entity::<components::PlayerBundle>("Player")
+        .register_ldtk_entity::<components::GoalBundle>("Goal")
         .add_systems(Startup, setup)
         .add_systems(Update, (systems::camera_follow, systems::mouse_to_world, systems::spawn_wall_collision))
         .add_systems(Update, (update_placer, update_player))
