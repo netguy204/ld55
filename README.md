@@ -32,6 +32,8 @@ Assets
 
 [] Collisions
 
+[] Visual Detailing
+
 [] LOS blocking
 
 [] Progression
