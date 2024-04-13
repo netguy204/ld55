@@ -34,7 +34,9 @@ Assets
 
 [x] Limited attractors
 
-[] Line of site and player ai (fun yet?)
+[x] Line of site
+
+[] player ai (fun yet?)
 
 [] Baddies
 
@@ -43,3 +45,16 @@ Assets
 [] LOS blocking
 
 [] Progression
+
+## Required to Finish
+
+[] My own art
+[] Music
+
+## Fun sources
+
+[] Danger from enemies
+   [] Press your luck
+[] Progression
+[] Puzzles
+   [] Strategy in placement

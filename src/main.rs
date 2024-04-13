@@ -16,8 +16,10 @@ fn update_player(
     mut commands: Commands,
     mut gizmos: Gizmos
 ) {
-    // fix this or start the ai i intend?
     for (mut p_vel, p_pos) in player.iter_mut() {
+        // find the closest attractor and move towards it
+        let mut closest_d = f32::MAX;
+        let mut closest = None;
         p_vel.linvel *= 0.9;
         for (e_attr, p_attr) in attractors.iter() {
             let to_attr = p_attr.translation() - p_pos.translation();
@@ -27,17 +29,21 @@ fn update_player(
             // verify that the ray doesn't collide with something else first
             let filter = QueryFilter::exclude_dynamic();
             if let Some((_, d)) = rapier.cast_ray(p_pos.translation().truncate(), to_attr, distance / PHYSICS_SCALE, false, filter) {
-                // the only colliders are walls. this can't attract
-                gizmos.line_2d(p_pos.translation().truncate(), to_attr * d * PHYSICS_SCALE, Color::WHITE);
                 continue;
             }
+            gizmos.line_2d(p_pos.translation().truncate(), p_attr.translation().truncate(), Color::WHITE);
 
-            let impulse = to_attr.normalize_or_zero() * 100.0 / (distance);
+            if distance < closest_d {
+                closest_d = distance;
+                closest = Some(to_attr);
+            }
+
             if distance < 10.0 {
                 commands.entity(e_attr).despawn();
             }
-            // println!("impulse: {:?}, distance: {:?}", impulse, distance);
-            p_vel.linvel += impulse;
+        }
+        if let Some(to_attr) = closest {
+            p_vel.linvel += to_attr.normalize() * 10.0;
         }
     }
 }
