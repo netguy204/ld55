@@ -178,17 +178,18 @@ pub fn spawn_wall_collision(
 }
 
 pub fn camera_follow(
-    player: Query<&Transform, With<components::Player>>,
+    player: Query<&GlobalTransform, With<components::Player>>,
     mut camera: Query<(&mut Transform, &mut OrthographicProjection), (With<components::MainCamera>, Without<components::Player>)>,
 ) {
     if player.is_empty() || camera.is_empty() {
         return;
     }
 
-    let player = player.single();
-    let (mut camera_xform, mut camera_proj) = camera.single_mut();
-    camera_xform.translation = player.translation;
-    camera_proj.scale = 0.25;
+    if let Some(player) = player.iter().next() {
+        let (mut camera_xform, mut camera_proj) = camera.single_mut();
+        camera_xform.translation = player.translation();
+        camera_proj.scale = 0.25;
+    }
 }
 
 

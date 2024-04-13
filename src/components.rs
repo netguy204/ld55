@@ -19,15 +19,17 @@ pub struct Player;
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
-    #[sprite_sheet_bundle("sunny_sprites/player.png", 32.0, 32.0, 3, 1, 0.0, 0.0, 1)]
+    player: Player,
+    #[sprite_sheet_bundle]
     pub sprite_bundle: SpriteSheetBundle,
     #[from_entity_instance]
     collider: ColliderBundle,
-    #[worldly]
-    pub worldly: Worldly,
+    // #[worldly]
+    // pub worldly: Worldly,
     #[from_entity_instance]
     entity_instance: EntityInstance,
-    player: Player,
+    #[grid_coords]
+    grid_coords: GridCoords,
 }
 
 #[derive(Component, Default, Clone)]
@@ -36,10 +38,10 @@ pub struct Goal;
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoalBundle {
     goal: Goal,
-    #[sprite_sheet_bundle("sunny_sprites/cherry.png", 21.0, 21.0, 3, 1, 0.0, 0.0, 1)]
+    #[sprite_sheet_bundle]
     pub sprite_bundle: SpriteSheetBundle,
-    #[worldly]
-    pub worldly: Worldly,
+    // #[worldly]
+    // pub worldly: Worldly,
 }
 
 #[derive(Component)]
@@ -128,14 +130,20 @@ impl AttractorBundle {
 
 
 #[derive(Component, Default)]
-pub struct Placer {
-    // selected_item: u8,
+pub struct Placer;
+
+
+#[derive(Component, Default)]
+pub struct Inventory {
+    pub count: u32,
 }
 
-#[derive(Bundle)]
+
+#[derive(Bundle, Default)]
 pub struct PlacerBundle {
     pub placer: Placer,
     pub sprite_bundle: SpriteBundle,
+    pub inventory: Inventory,
 }
 
 

@@ -28,9 +28,13 @@ Assets
 
 ## Steps
 
-[] Place attractors, hero collects.
+[x] Place attractors, hero collects.
 
-[] Collisions
+[x] Collisions
+
+[] Limited attractors
+
+[] Baddies
 
 [] Visual Detailing
 
