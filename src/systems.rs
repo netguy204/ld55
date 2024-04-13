@@ -188,7 +188,7 @@ pub fn camera_follow(
     if let Some(player) = player.iter().next() {
         let (mut camera_xform, mut camera_proj) = camera.single_mut();
         camera_xform.translation = player.translation();
-        camera_proj.scale = 0.25;
+        camera_proj.scale = 0.5;
     }
 }
 

@@ -12,6 +12,7 @@ const PHYSICS_SCALE: f32 = 100.0;
 fn update_player(
     mut player: Query<(&mut Velocity, &GlobalTransform), With<components::Player>>,
     attractors: Query<(Entity, &GlobalTransform), (With<components::Attractor>, Without<components::Player>)>,
+    goal: Query<(Entity, &Transform), (With<components::Goal>, Without<components::Player>)>,
     rapier: Res<RapierContext>,
     mut commands: Commands,
     mut gizmos: Gizmos
@@ -22,13 +23,12 @@ fn update_player(
         let mut closest = None;
         p_vel.linvel *= 0.9;
         for (e_attr, p_attr) in attractors.iter() {
-            let to_attr = p_attr.translation() - p_pos.translation();
-            let to_attr = to_attr.truncate();
+            let to_attr = (p_attr.translation() - p_pos.translation()).truncate();
             let distance = to_attr.length();
 
             // verify that the ray doesn't collide with something else first
             let filter = QueryFilter::exclude_dynamic();
-            if let Some((_, d)) = rapier.cast_ray(p_pos.translation().truncate(), to_attr, distance / PHYSICS_SCALE, false, filter) {
+            if let Some(_) = rapier.cast_ray(p_pos.translation().truncate(), to_attr, 1.0, false, filter) {
                 continue;
             }
             gizmos.line_2d(p_pos.translation().truncate(), p_attr.translation().truncate(), Color::WHITE);
@@ -38,12 +38,13 @@ fn update_player(
                 closest = Some(to_attr);
             }
 
-            if distance < 10.0 {
+            // if the attractor is in range and not the goal then collect it
+            if distance < 10.0 && goal.get(e_attr).is_err() {
                 commands.entity(e_attr).despawn();
             }
         }
         if let Some(to_attr) = closest {
-            p_vel.linvel += to_attr.normalize() * 10.0;
+            p_vel.linvel += to_attr.normalize_or_zero() * 10.0;
         }
     }
 }
@@ -59,7 +60,7 @@ fn update_placer(
         if let Some((mut inventory, mut placer)) = placer.iter_mut().next() {
             placer.translation = pos;
             if buttons.just_pressed(MouseButton::Left) && inventory.count > 0 {
-                commands.spawn(components::AttractorBundle::new(asset_server, pos));
+                commands.spawn(components::GoodieBundle::new(asset_server, pos));
                 inventory.count -= 1;
             }
         }
@@ -99,10 +100,11 @@ fn check_win_lose(
                         },
                         ..Default::default()
                     });
+                    commands.entity(entity).despawn();
+                    println!("despawn goal");
                 } else {
                     advance = true;
                 }
-                commands.entity(entity).despawn();
             }
             // println!("distance: {:?}", distance)
         }
@@ -240,6 +242,7 @@ fn main() {
         .register_ldtk_entity::<components::GoalBundle>("Goal")
         .add_systems(Startup, setup)
         .add_systems(Update, (systems::camera_follow, systems::mouse_to_world, systems::spawn_wall_collision))
-        .add_systems(Update, (update_placer, update_player, check_win_lose, update_count))
+        .add_systems(Update, (update_placer, check_win_lose, update_count))
+        .add_systems(PostUpdate, update_player)
         .run();
 }

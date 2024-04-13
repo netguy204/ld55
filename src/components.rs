@@ -37,6 +37,7 @@ pub struct Goal;
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoalBundle {
+    attractor: Attractor,
     goal: Goal,
     #[sprite_sheet_bundle]
     pub sprite_bundle: SpriteSheetBundle,
@@ -110,12 +111,12 @@ pub struct Attractor;
 
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
-pub struct AttractorBundle {
+pub struct GoodieBundle {
     attractor: Attractor,
     pub sprite: SpriteBundle,
 }
 
-impl AttractorBundle {
+impl GoodieBundle {
     pub fn new(asset_server: Res<AssetServer>, pos: Vec3) -> Self {
         Self {
             attractor: Attractor,
