@@ -32,7 +32,9 @@ Assets
 
 [x] Collisions
 
-[] Limited attractors
+[x] Limited attractors
+
+[] Line of site and player ai (fun yet?)
 
 [] Baddies
 

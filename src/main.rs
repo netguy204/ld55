@@ -6,25 +6,38 @@ use components::Inventory;
 mod systems;
 mod components;
 
+const LAST_LEVEL: usize = 1;
+const PHYSICS_SCALE: f32 = 100.0;
 
 fn update_player(
     mut player: Query<(&mut Velocity, &GlobalTransform), With<components::Player>>,
     attractors: Query<(Entity, &GlobalTransform), (With<components::Attractor>, Without<components::Player>)>,
+    rapier: Res<RapierContext>,
     mut commands: Commands,
+    mut gizmos: Gizmos
 ) {
     // fix this or start the ai i intend?
-    for (mut velocity, position) in player.iter_mut() {
-        velocity.linvel *= 0.9;
-        for (entity, attractor) in attractors.iter() {
-            let direction = attractor.translation() - position.translation();
-            let direction = direction.truncate();
-            let distance = direction.length();
-            let impulse = direction.normalize_or_zero() * 100.0 / (distance);
+    for (mut p_vel, p_pos) in player.iter_mut() {
+        p_vel.linvel *= 0.9;
+        for (e_attr, p_attr) in attractors.iter() {
+            let to_attr = p_attr.translation() - p_pos.translation();
+            let to_attr = to_attr.truncate();
+            let distance = to_attr.length();
+
+            // verify that the ray doesn't collide with something else first
+            let filter = QueryFilter::exclude_dynamic();
+            if let Some((_, d)) = rapier.cast_ray(p_pos.translation().truncate(), to_attr, distance / PHYSICS_SCALE, false, filter) {
+                // the only colliders are walls. this can't attract
+                gizmos.line_2d(p_pos.translation().truncate(), to_attr * d * PHYSICS_SCALE, Color::WHITE);
+                continue;
+            }
+
+            let impulse = to_attr.normalize_or_zero() * 100.0 / (distance);
             if distance < 10.0 {
-                commands.entity(entity).despawn();
+                commands.entity(e_attr).despawn();
             }
             // println!("impulse: {:?}, distance: {:?}", impulse, distance);
-            velocity.linvel += impulse;
+            p_vel.linvel += impulse;
         }
     }
 }
@@ -64,7 +77,7 @@ fn check_win_lose(
         for (entity, goal) in goal.iter() {
             let distance = player.translation.distance(goal.translation);
             if distance < 10.0 {
-                if indices.level == 1 {
+                if indices.level == LAST_LEVEL {
                     commands.spawn(TextBundle {
                         text: Text {
                             sections: vec![TextSection {
@@ -163,7 +176,7 @@ pub fn setup(
             ..default()
         },
         inventory: Inventory {
-            count: 10,
+            count: 20,
         },
         ..default()
     }).with_children(|parent| {
@@ -201,7 +214,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(LdtkPlugin)
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(PHYSICS_SCALE))
+        // .add_plugins(RapierDebugRenderPlugin::default())
         .insert_resource(RapierConfiguration {
             gravity: Vec2::new(0.0, 0.0),
             ..Default::default()
