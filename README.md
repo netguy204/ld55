@@ -6,6 +6,8 @@ Bringing. Calling. Attracting.
 
 Stuff, Friends, Foes, Items
 
+[Preview](http://www.50ply.com/ld55/preview/index.html)
+
 
 ## Idea
 
@@ -38,19 +40,20 @@ Assets
 
 [x] player ai (fun yet?) YES!
 
-[] planning camera, action camera
-
-[] Baddies
+[x] planning camera, action camera
 
 [] Visual Detailing
 
 [] LOS blocking
 
+[] Baddies
+
 [] Progression
 
 ## Required to Finish
 
-[] My own art
+[x] My own art
+
 [] Music
 
 ## Fun sources

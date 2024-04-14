@@ -8,6 +8,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::components;
 
+
 /// Spawns heron collisions for the walls of a level
 ///
 /// You could just insert a ColliderBundle in to the WallBundle,
@@ -178,17 +179,20 @@ pub fn spawn_wall_collision(
 }
 
 pub fn camera_follow(
-    player: Query<&GlobalTransform, (With<components::Player>, Without<components::Paused>)>,
+    state: Res<CurrentState>,
+    player: Query<&GlobalTransform, With<components::Player>>,
     mut camera: Query<(&mut Transform, &mut OrthographicProjection), (With<components::MainCamera>, Without<components::Player>)>,
 ) {
     if player.is_empty() || camera.is_empty() {
         return;
     }
 
-    if let Some(player) = player.iter().next() {
-        let (mut camera_xform, mut camera_proj) = camera.single_mut();
-        camera_xform.translation = player.translation();
-        camera_proj.scale = 0.25;
+    if state.0 != GameState::Planning {
+        if let Some(player) = player.iter().next() {
+            let (mut camera_xform, mut camera_proj) = camera.single_mut();
+            camera_xform.translation = player.translation();
+            camera_proj.scale = 0.25;
+        }
     }
 }
 

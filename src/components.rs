@@ -4,6 +4,22 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 
+
+#[derive(Default, PartialEq)]
+pub enum GameState {
+    #[default]
+    Focusing,
+    Planning,
+    Running,
+    AdvanceLevel,
+    GameWin,
+    WinDance,
+    GameLose,
+}
+
+#[derive(Resource, Default)]
+pub struct CurrentState(pub GameState);
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Wall;
 
@@ -39,7 +55,6 @@ pub struct PlayerBundle {
     entity_instance: EntityInstance,
     #[grid_coords]
     grid_coords: GridCoords,
-    paused: Paused,
     animation_timer: AnimationTimer,
 }
 
@@ -167,12 +182,22 @@ impl GoodieBundle {
 }
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
-struct GarbageBundle {
+pub struct GarbageBundle {
     attractor: Attractor,
     #[sprite_sheet_bundle]
     sprite_bundle: SpriteSheetBundle,
 }
 
+#[derive(Component, Default, Clone)]
+pub struct Exit;
+
+#[derive(Bundle, Default, Clone, LdtkEntity)]
+pub struct ExitBundle {
+    exit: Exit,
+    timer: AnimationTimer,
+    #[sprite_sheet_bundle]
+    sprite_bundle: SpriteSheetBundle,
+}
 
 #[derive(Component, Default)]
 pub struct Placer;
@@ -196,6 +221,3 @@ pub struct PlacerBundle {
 pub struct WorldMouse {
     pub pos: Option<Vec3>
 }
-
-#[derive(Component, Default, Clone)]
-pub struct Paused;
