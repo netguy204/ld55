@@ -13,6 +13,15 @@ pub struct WallBundle {
 }
 
 
+#[derive(Component, Clone)]
+pub struct AnimationTimer(pub Timer);
+
+impl Default for AnimationTimer {
+    fn default() -> Self {
+        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating))
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Player;
 
@@ -20,7 +29,7 @@ pub struct Player;
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     player: Player,
-    #[sprite_sheet_bundle]
+    #[sprite_sheet_bundle("raccoon.png", 32.0, 32.0, 4, 1, 0.0, 0.0, 0)]
     pub sprite_bundle: SpriteSheetBundle,
     #[from_entity_instance]
     collider: ColliderBundle,
@@ -31,13 +40,24 @@ pub struct PlayerBundle {
     #[grid_coords]
     grid_coords: GridCoords,
     paused: Paused,
+    animation_timer: AnimationTimer,
 }
 
 #[derive(Component, Default, Clone)]
 pub struct Goal;
 
+#[derive(Component, Clone)]
+pub struct LevelEndTimer(pub Timer);
+
+impl Default for LevelEndTimer {
+    fn default() -> Self {
+        LevelEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
+    }
+}
+
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoalBundle {
+    end_level_timer: LevelEndTimer,
     attractor: Attractor,
     goal: Goal,
     #[sprite_sheet_bundle]
@@ -114,20 +134,43 @@ pub struct Attractor;
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoodieBundle {
     attractor: Attractor,
-    pub sprite: SpriteBundle,
+    pub sprite: SpriteSheetBundle,
 }
 
 impl GoodieBundle {
-    pub fn new(asset_server: Res<AssetServer>, pos: Vec3) -> Self {
+    pub fn new(asset_server: &Res<AssetServer>, pos: Vec3) -> Self {
         Self {
             attractor: Attractor,
-            sprite: SpriteBundle {
-                texture: asset_server.load("attractors.png"),
-                transform: Transform::from_translation(pos),
-                ..Default::default()
-            }
+            sprite: GoodieBundle::spritesheet(asset_server, pos),
         }
     }
+
+    pub fn spritesheet(asset_server: &Res<AssetServer>, pos: Vec3) -> SpriteSheetBundle {
+        let texture_atlas = TextureAtlas::from_grid(
+            asset_server.load("garbage.png"), 
+            Vec2::new(32.0, 32.0), 
+            3,
+            1,
+            None, None
+        );
+        let texture_atlas = asset_server.add(texture_atlas);
+        SpriteSheetBundle {
+            sprite: TextureAtlasSprite{
+                index: 2,
+                ..default()
+            },
+            texture_atlas,
+            transform: Transform::from_translation(pos),
+            ..default()
+        }
+    }
+}
+
+#[derive(Clone, Default, Bundle, LdtkEntity)]
+struct GarbageBundle {
+    attractor: Attractor,
+    #[sprite_sheet_bundle]
+    sprite_bundle: SpriteSheetBundle,
 }
 
 
@@ -144,7 +187,7 @@ pub struct Inventory {
 #[derive(Bundle, Default)]
 pub struct PlacerBundle {
     pub placer: Placer,
-    pub sprite_bundle: SpriteBundle,
+    pub sprite_sheet_bundle: SpriteSheetBundle,
     pub inventory: Inventory,
 }
 

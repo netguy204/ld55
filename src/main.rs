@@ -1,23 +1,27 @@
+use core::time;
+
 use bevy::{prelude::*, text::BreakLineOn};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
-use components::Inventory;
+use components::{GoodieBundle, Inventory, LevelEndTimer};
 
 mod systems;
 mod components;
 
-const LAST_LEVEL: usize = 1;
+const LAST_LEVEL: usize = 2;
 const PHYSICS_SCALE: f32 = 100.0;
 
+
 fn update_player(
-    mut player: Query<(&mut Velocity, &GlobalTransform), (With<components::Player>, Without<components::Paused>)>,
+    time: Res<Time>,
+    mut player: Query<(&mut Velocity, &GlobalTransform, &mut components::AnimationTimer, &mut TextureAtlasSprite, &mut Transform), (With<components::Player>, Without<components::Paused>)>,
     attractors: Query<(Entity, &GlobalTransform), (With<components::Attractor>, Without<components::Player>)>,
     goal: Query<(Entity, &Transform), (With<components::Goal>, Without<components::Player>)>,
     rapier: Res<RapierContext>,
     mut commands: Commands,
     mut gizmos: Gizmos
 ) {
-    for (mut p_vel, p_pos) in player.iter_mut() {
+    for (mut p_vel, p_pos, mut timer, mut atlas, mut p_xform) in player.iter_mut() {
         // find the closest attractor and move towards it
         let mut closest_d = f32::MAX;
         let mut closest = None;
@@ -46,6 +50,16 @@ fn update_player(
         if let Some(to_attr) = closest {
             p_vel.linvel += to_attr.normalize_or_zero() * 10.0;
         }
+
+        if p_vel.linvel.length() > 10.0 {
+            if timer.0.tick(time.delta()).just_finished() {
+                atlas.index = (atlas.index + 1) % 4;
+            }
+            // the sprite native orientation is straight up. orient it in the direction of the velocity vector
+            let angle = p_vel.linvel.angle_between(Vec2::Y);
+            p_xform.rotation = Quat::from_rotation_z(-angle);
+        }
+        
     }
 }
 
@@ -130,10 +144,14 @@ fn check_win_lose(
 }
 
 fn update_state(
+    time: Res<Time>,
     mut state: ResMut<CurrentState>,
     level: ResMut<LevelSelection>,
     focus: Query<&GlobalTransform, With<CameraFocus>>,
+    player: Query<Entity, With<components::Player>>,
+    mut goal: Query<(&mut LevelEndTimer, &mut TextureAtlasSprite), With<components::Goal>>,
     mut camera: Query<&mut Transform, With<components::MainCamera>>,
+    mut commands: Commands,
 ) {
     let indices = match level.into_inner() {
         LevelSelection::Indices(indices) => indices,
@@ -157,12 +175,24 @@ fn update_state(
     }
     
     if state.0 == GameState::AdvanceLevel {
-        if indices.level < LAST_LEVEL {
+        let (mut level_end_timer, mut goal_anim) = goal.single_mut();
+        if level_end_timer.0.tick(time.delta()).just_finished() {
+            indices.level += 1;
             state.0 = GameState::Focusing;
         } else {
-            state.0 = GameState::Focusing;
+            // despawn the player if they're still around
+            for player in player.iter() {
+                commands.entity(player).despawn();
+            }
+            // advance the goal animation linearly through time
+            let remaining = level_end_timer.0.remaining_secs();
+            let since_start = level_end_timer.0.duration().as_secs_f32() - remaining;
+            let completion_fraction = since_start / level_end_timer.0.duration().as_secs_f32();
+
+            // animation is in frame 1-7
+            let frame = (completion_fraction * 6.0) as usize;
+            goal_anim.index = 1 + frame;
         }
-        indices.level += 1;
     }
 }
 
@@ -175,9 +205,9 @@ fn update_placer(
 ) {
     if let Some(pos) = wm.pos {
         if let Some((mut inventory, mut placer)) = placer.iter_mut().next() {
-            placer.translation = pos;
+            placer.translation = pos.xy().extend(2.0);
             if buttons.just_pressed(MouseButton::Left) && inventory.count > 0 {
-                commands.spawn(components::GoodieBundle::new(asset_server, pos));
+                commands.spawn(components::GoodieBundle::new(&asset_server, pos.xy().extend(2.0)));
                 inventory.count -= 1;
             }
         }
@@ -245,7 +275,7 @@ pub fn setup(
     let camera = Camera2dBundle::default();
     commands.spawn(camera).insert(components::MainCamera);
 
-    let ldtk_handle = asset_server.load("test.ldtk");
+    let ldtk_handle = asset_server.load("attic.ldtk");
     commands.spawn(LdtkWorldBundle {
         ldtk_handle,
         ..Default::default()
@@ -253,10 +283,7 @@ pub fn setup(
 
     commands.spawn(components::PlacerBundle {
         placer: components::Placer,
-        sprite_bundle: SpriteBundle {
-            texture: asset_server.load("attractors.png"),
-            ..default()
-        },
+        sprite_sheet_bundle: GoodieBundle::spritesheet(&asset_server, Vec3::new(0.0, 0.0, 0.0)),
         inventory: Inventory {
             count: 20,
         },
@@ -326,9 +353,10 @@ fn main() {
             ..Default::default()
         })
         .register_ldtk_int_cell::<components::WallBundle>(2)
-        .register_ldtk_entity::<components::PlayerBundle>("Player")
-        .register_ldtk_entity::<components::GoalBundle>("Goal")
-        .register_ldtk_entity::<CameraFocusBundle>("CameraFocus")
+        .register_ldtk_entity::<components::PlayerBundle>("Raccoon")
+        .register_ldtk_entity::<components::GoalBundle>("Trash")
+        .register_ldtk_entity::<components::GoalBundle>("Garbage")
+        .register_ldtk_entity::<CameraFocusBundle>("Focus")
         .add_systems(Startup, setup)
         .add_systems(Update, (systems::camera_follow, systems::mouse_to_world, systems::spawn_wall_collision))
         .add_systems(Update, (update_placer, check_win_lose, update_count, controls, update_hud, update_state))
