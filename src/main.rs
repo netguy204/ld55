@@ -8,7 +8,7 @@ mod components;
 
 const LAST_LEVEL: usize = 2;
 const PHYSICS_SCALE: f32 = 100.0;
-
+const INITIAL_INVENTORY: u32 = 10;
 
 fn update_player(
     time: Res<Time>,
@@ -51,6 +51,11 @@ fn update_player(
             }
             if let Some(to_attr) = closest {
                 p_vel.linvel += to_attr.normalize_or_zero() * 10.0;
+            } else {
+                // game over if no longer moving moving
+                if p_vel.linvel.length() < 0.01 {
+                    state.0 = GameState::GameLose;
+                }
             }
         } else if state.0 == GameState::GameWin {
             for e_exit in exit.iter() {
@@ -125,10 +130,10 @@ fn update_hud(
                 text.sections[0].value = "You Win!".to_string();
             }
             GameState::WinDance => {
-                text.sections[0].value = "Close the window to exit.".to_string();
+                text.sections[0].value = "Close the window to exit. Press R to restart.".to_string();
             }
             GameState::GameLose => {
-                text.sections[0].value = "You Lose!".to_string();
+                text.sections[0].value = "The raccoon starved to death! Press R to restart.".to_string();
             }
         
         }
@@ -150,30 +155,24 @@ fn animate_exit(
     if state.0 == GameState::WinDance {
         for (mut timer, mut sprite) in exit.iter_mut() {
             if timer.0.tick(time.delta()).just_finished() {
-                sprite.index = 4 + ((sprite.index + 1) % 2);
+                sprite.index = 4 + ((sprite.index + 1) % 3);
             }
         }
     }
 }
 
-fn check_win_lose(
-    player: Query<(&Transform, &Velocity), With<Player>>,
-    inventory: Query<&Inventory, With<Placer>>,
+fn check_win(
+    player: Query<&Transform, With<Player>>,
     goal: Query<&Transform, (With<Goal>, Without<Player>)>,
     mut state: ResMut<CurrentState>,
 ) {
     if state.0 == GameState::Running {
-        if let Some((player, velocity)) = player.iter().next() {
+        if let Some(player) = player.iter().next() {
             for goal in goal.iter() {
                 let distance = player.translation.distance(goal.translation);
                 if distance < 10.0 {
                     state.0 = GameState::AdvanceLevel;
                 }
-            }
-            // game over if you're out of inventory and not moving
-            let inventory = inventory.iter().next().unwrap();
-            if inventory.count == 0 && velocity.linvel.length() < 0.01 {
-                state.0 = GameState::GameLose;
             }
         }
     }
@@ -185,6 +184,7 @@ fn update_state(
     level: ResMut<LevelSelection>,
     focus: Query<&GlobalTransform, With<CameraFocus>>,
     player: Query<Entity, With<Player>>,
+    placer: Query<Entity, With<Placer>>,
     mut goal: Query<(&mut LevelEndTimer, &mut TextureAtlasSprite), With<Goal>>,
     mut camera: Query<&mut Transform, With<MainCamera>>,
     mut commands: Commands,
@@ -193,7 +193,12 @@ fn update_state(
         LevelSelection::Indices(indices) => indices,
         _ => panic!("level selection should be indices"),
     };
-
+    let placer = placer.iter().next();
+    if state.0 == GameState::Running {
+        if let Some(placer) = placer {
+            commands.entity(placer).insert(Visibility::Hidden);
+        }
+    }
     if state.0 == GameState::Focusing {
         for focus in &focus {
             for mut camera in camera.iter_mut() {
@@ -201,8 +206,14 @@ fn update_state(
                     camera.translation = focus.translation();
                     if indices.level > LAST_LEVEL {
                         state.0 = GameState::GameWin;
+                        if let Some(placer) = placer {
+                            commands.entity(placer).insert(Visibility::Hidden);
+                        }
                     } else {
                         state.0 = GameState::Planning;
+                        if let Some(placer) = placer {
+                            commands.entity(placer).insert(Visibility::Inherited);
+                        }
                     }
                 }
             }
@@ -232,18 +243,21 @@ fn update_state(
 }
 
 fn update_placer(
+    state: Res<CurrentState>,
     wm: Res<WorldMouse>,
     buttons: Res<Input<MouseButton>>,
     mut placer: Query<(&mut Inventory, &mut Transform), With<Placer>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-    if let Some(pos) = wm.pos {
-        if let Some((mut inventory, mut placer)) = placer.iter_mut().next() {
-            placer.translation = pos.xy().extend(2.0);
-            if buttons.just_pressed(MouseButton::Left) && inventory.count > 0 {
-                commands.spawn(GoodieBundle::new(&asset_server, pos.xy().extend(2.0)));
-                inventory.count -= 1;
+    if state.0 == GameState::Planning {
+        if let Some(pos) = wm.pos {
+            if let Some((mut inventory, mut placer)) = placer.iter_mut().next() {
+                placer.translation = pos.xy().extend(2.0);
+                if buttons.just_pressed(MouseButton::Left) && inventory.count > 0 {
+                    commands.spawn(GoodieBundle::new(&asset_server, pos.xy().extend(2.0)));
+                    inventory.count -= 1;
+                }
             }
         }
     }
@@ -253,16 +267,23 @@ fn update_placer(
 pub fn controls(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
+    mut inventory: Query<&mut Inventory>,
     mut camera: Query<(&mut Transform, &mut OrthographicProjection), With<MainCamera>>,
     mut state: ResMut<CurrentState>,
+    mut level: ResMut<LevelSelection>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        if state.0 == GameState::Planning {
-            state.0 = GameState::Running;
+    if keyboard_input.just_pressed(KeyCode::R) {
+        state.0 = GameState::Focusing;
+        *level = LevelSelection::Indices(LevelIndices{level: 0, ..default()});
+        if let Some(mut inventory) = inventory.iter_mut().next() {
+            inventory.count = INITIAL_INVENTORY;
         }
     }
     if state.0 == GameState::Planning {
         let (mut camera, mut proj) = camera.single_mut();
+        if keyboard_input.just_pressed(KeyCode::Space) {
+            state.0 = GameState::Running;
+        }
         proj.scale = 0.5;
         let camera_speed = 200.0;
         if keyboard_input.pressed(KeyCode::W) {
@@ -301,7 +322,7 @@ pub fn setup(
         placer: Placer,
         sprite_sheet_bundle: GoodieBundle::spritesheet(&asset_server, Vec3::new(0.0, 0.0, 0.0)),
         inventory: Inventory {
-            count: 20,
+            count: 10,
         },
         ..default()
     }).with_children(|parent| {
@@ -377,7 +398,7 @@ fn main() {
         .register_ldtk_entity::<CameraFocusBundle>("Focus")
         .add_systems(Startup, setup)
         .add_systems(Update, (systems::camera_follow, systems::mouse_to_world, systems::spawn_wall_collision))
-        .add_systems(Update, (update_placer, check_win_lose, update_count, controls, update_hud, update_state, animate_exit))
+        .add_systems(Update, (update_placer, update_count, controls, update_hud, update_state, animate_exit, check_win))
         .add_systems(PostUpdate, update_player)
         .run();
 }

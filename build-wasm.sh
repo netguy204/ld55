@@ -12,9 +12,9 @@ cp -r assets out/
 rm out/*aseprite
 
 OUTFILE=out/ld55_bg.wasm
-# echo "optimizing wasm..."
-# wasm-opt -Os $OUTFILE -o test.wasm
-# mv test.wasm $OUTFILE
+echo "optimizing wasm..."
+wasm-opt -Os $OUTFILE -o test.wasm
+mv test.wasm $OUTFILE
 
 cat << EOF > out/index.html
 <!doctype html>

@@ -619,13 +619,13 @@
 			"cachedPixelData": { "opaqueTiles": "000", "averageColors": "49926ddd6cb9" }
 		},
 		{
-			"__cWid": 6,
+			"__cWid": 12,
 			"__cHei": 1,
 			"identifier": "Exit",
 			"uid": 28,
 			"relPath": "exit.png",
 			"embedAtlas": null,
-			"pxWid": 192,
+			"pxWid": 384,
 			"pxHei": 32,
 			"tileGridSize": 32,
 			"spacing": 0,
@@ -635,7 +635,7 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": { "opaqueTiles": "000000", "averageColors": "7ccc7ccc7ccc7ccca988a988" }
+			"cachedPixelData": { "opaqueTiles": "000000000000", "averageColors": "7ccc7ccc7ccc7ccc88887888777778888999a988a988a988" }
 		}
 	], "enums": [], "externalEnums": [], "levelFields": [] },
 	"levels": [

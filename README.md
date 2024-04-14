@@ -42,9 +42,13 @@ Assets
 
 [x] planning camera, action camera
 
-[] Visual Detailing
+[x] Visual Detailing
 
-[] LOS blocking
+[x] LOS blocking
+
+[] Lose on bad plan
+
+[] More levels
 
 [] Baddies
 
@@ -54,12 +58,10 @@ Assets
 
 [x] My own art
 
-[] Music
-
 ## Fun sources
 
 [] Danger from enemies
    [] Press your luck
 [] Progression
-[] Puzzles
-   [] Strategy in placement
+[x] Puzzles
+   [x] Strategy in placement
