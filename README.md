@@ -36,7 +36,9 @@ Assets
 
 [x] Line of site
 
-[] player ai (fun yet?)
+[x] player ai (fun yet?) YES!
+
+[] planning camera, action camera
 
 [] Baddies
 

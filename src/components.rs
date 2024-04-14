@@ -30,6 +30,7 @@ pub struct PlayerBundle {
     entity_instance: EntityInstance,
     #[grid_coords]
     grid_coords: GridCoords,
+    paused: Paused,
 }
 
 #[derive(Component, Default, Clone)]
@@ -152,3 +153,6 @@ pub struct PlacerBundle {
 pub struct WorldMouse {
     pub pos: Option<Vec3>
 }
+
+#[derive(Component, Default, Clone)]
+pub struct Paused;
