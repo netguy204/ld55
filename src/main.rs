@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use bevy::{asset::AssetMetaCheck, prelude::*, text::BreakLineOn};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -13,7 +15,7 @@ const INITIAL_INVENTORY: u32 = 10;
 fn update_player(
     time: Res<Time>,
     mut state: ResMut<CurrentState>,
-    mut player: Query<(Entity, &mut Velocity, &GlobalTransform, &mut AnimationTimer, &mut TextureAtlasSprite, &mut Transform), With<Player>>,
+    mut player: Query<(Entity, &mut Velocity, &GlobalTransform, &mut AnimationTimer, &mut TextureAtlasSprite, &mut Transform, &mut LevelEndTimer), With<Player>>,
     attractors: Query<(Entity, &GlobalTransform), (With<Attractor>, Without<Player>)>,
     goal: Query<(Entity, &Transform), (With<Goal>, Without<Player>)>,
     exit: Query<&GlobalTransform, With<Exit>>,
@@ -21,7 +23,7 @@ fn update_player(
     mut commands: Commands,
     mut gizmos: Gizmos
 ) {
-    for (pentity, mut p_vel, p_pos, mut timer, mut atlas, mut p_xform) in player.iter_mut() {
+    for (pentity, mut p_vel, p_pos, mut timer, mut atlas, mut p_xform, mut death_timer) in player.iter_mut() {
         // find the closest attractor and move towards it
         let mut closest_d = f32::MAX;
         let mut closest = None;
@@ -66,6 +68,16 @@ fn update_player(
                     commands.entity(pentity).despawn();
                 }
             }
+        } else if state.0 == GameState::GameLose {
+            // advance the goal animation linearly through time
+            death_timer.0.tick(time.delta());
+            let remaining = death_timer.0.remaining_secs();
+            let since_start = death_timer.0.duration().as_secs_f32() - remaining;
+            let completion_fraction = since_start / death_timer.0.duration().as_secs_f32();
+
+            // animation is in frame 5-8
+            let frame = (completion_fraction * 4.0) as usize;
+            atlas.index = min(8, 4 + frame);
         }
         
 

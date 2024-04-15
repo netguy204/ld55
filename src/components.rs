@@ -31,6 +31,15 @@ pub struct WallBundle {
 
 
 #[derive(Component, Clone)]
+pub struct LevelEndTimer(pub Timer);
+
+impl Default for LevelEndTimer {
+    fn default() -> Self {
+        LevelEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
+    }
+}
+
+#[derive(Component, Clone)]
 pub struct AnimationTimer(pub Timer);
 
 impl Default for AnimationTimer {
@@ -46,7 +55,7 @@ pub struct Player;
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     player: Player,
-    #[sprite_sheet_bundle("raccoon.png", 32.0, 32.0, 4, 1, 0.0, 0.0, 0)]
+    #[sprite_sheet_bundle]
     pub sprite_bundle: SpriteSheetBundle,
     #[from_entity_instance]
     collider: ColliderBundle,
@@ -57,19 +66,12 @@ pub struct PlayerBundle {
     #[grid_coords]
     grid_coords: GridCoords,
     animation_timer: AnimationTimer,
+    death_timer: LevelEndTimer,
 }
 
 #[derive(Component, Default, Clone)]
 pub struct Goal;
 
-#[derive(Component, Clone)]
-pub struct LevelEndTimer(pub Timer);
-
-impl Default for LevelEndTimer {
-    fn default() -> Self {
-        LevelEndTimer(Timer::from_seconds(1.0, TimerMode::Once))
-    }
-}
 
 #[derive(Clone, Default, Bundle, LdtkEntity)]
 pub struct GoalBundle {

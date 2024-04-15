@@ -562,13 +562,13 @@
 			"cachedPixelData": { "opaqueTiles": "1111111111", "averageColors": "fc97fb97fa75fd96fc85fc96fc96fc85fc85fb85" }
 		},
 		{
-			"__cWid": 4,
+			"__cWid": 9,
 			"__cHei": 1,
 			"identifier": "Raccoon",
 			"uid": 3,
 			"relPath": "raccoon.png",
 			"embedAtlas": null,
-			"pxWid": 128,
+			"pxWid": 288,
 			"pxHei": 32,
 			"tileGridSize": 32,
 			"spacing": 0,
@@ -578,7 +578,7 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": { "opaqueTiles": "0000", "averageColors": "3555366636663666" }
+			"cachedPixelData": { "opaqueTiles": "000000000", "averageColors": "3555366636663666255527772aaa2bbb1fff" }
 		},
 		{
 			"__cWid": 7,
@@ -616,7 +616,7 @@
 			"enumTags": [],
 			"customData": [],
 			"savedSelections": [],
-			"cachedPixelData": { "opaqueTiles": "000", "averageColors": "49926ddd6cb9" }
+			"cachedPixelData": { "opaqueTiles": "000", "averageColors": "49926ddd3cb9" }
 		},
 		{
 			"__cWid": 12,
