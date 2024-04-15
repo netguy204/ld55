@@ -8,6 +8,7 @@ use bevy_rapier2d::prelude::*;
 #[derive(Default, PartialEq)]
 pub enum GameState {
     #[default]
+    Instructions,
     Focusing,
     Planning,
     Running,

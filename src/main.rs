@@ -97,7 +97,7 @@ impl HUD {
                     style: TextStyle {
                         font_size: 40.0,
                         color: Color::WHITE,
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font: asset_server.load("fonts/PixelifySans-Bold.ttf"),
                     },
                 }],
                 alignment: TextAlignment::Center,
@@ -114,6 +114,7 @@ fn update_hud(
 ) {
     for mut text in query.iter_mut() {
         match state.0 {
+            GameState::Instructions => {}
             GameState::Focusing => {
                 text.sections[0].value = "Focusing".to_string();
             }
@@ -271,7 +272,19 @@ pub fn controls(
     mut camera: Query<(&mut Transform, &mut OrthographicProjection), With<MainCamera>>,
     mut state: ResMut<CurrentState>,
     mut level: ResMut<LevelSelection>,
+    instructions: Query<Entity, With<Instructions>>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) {
+    if state.0 == GameState::Instructions {
+        if keyboard_input.just_pressed(KeyCode::Space) {
+            if let Some(instructions) = instructions.iter().next() {
+                commands.entity(instructions).despawn();
+                state.0 = GameState::Focusing;
+                finish_setup(commands, asset_server);
+            }
+        }
+    }
     if keyboard_input.just_pressed(KeyCode::R) {
         state.0 = GameState::Focusing;
         *level = LevelSelection::Indices(LevelIndices{level: 0, ..default()});
@@ -301,6 +314,8 @@ pub fn controls(
     }
 }
 
+#[derive(Component)]
+pub struct Instructions;
 
 #[derive(Component)]
 pub struct PlacerText;
@@ -312,6 +327,17 @@ pub fn setup(
     let camera = Camera2dBundle::default();
     commands.spawn(camera).insert(MainCamera);
 
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("instructions.png"),
+        transform: Transform::from_xyz(0.0, 0.0, -2.0).with_scale(Vec3::splat(1.5)),
+        ..Default::default()
+    }).insert(Instructions);
+}
+
+pub fn finish_setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
     let ldtk_handle = asset_server.load("attic.ldtk");
     commands.spawn(LdtkWorldBundle {
         ldtk_handle,
@@ -331,9 +357,9 @@ pub fn setup(
                 sections: vec![TextSection {
                     value: "Remaining: 0".to_string(),
                     style: TextStyle {
-                        font_size: 5.0,
+                        font_size: 10.0,
                         color: Color::WHITE,
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font: asset_server.load("fonts/PixelifySans-Bold.ttf"),
                     },
                 }],
                 alignment: TextAlignment::Center,
